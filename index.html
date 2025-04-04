@@ -102,10 +102,8 @@
       loading.style.display = "block";
 
       try {
-        const res = await fetch("https://YOUR_REPLIT_BACKEND_URL/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message })
+        const res = await fetch("https://saylessaibackend.alexharrison111.repl.co/chat", {
+
         });
         const data = await res.json();
 
