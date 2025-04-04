@@ -7,7 +7,13 @@
     body {
       font-family: sans-serif;
       padding: 2rem;
+      margin: 0;
       background: #f9f9f9;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: #121212;
+      color: #fff;
     }
     #chatbox {
       max-width: 600px;
@@ -16,6 +22,15 @@
       padding: 1rem;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    body.dark #chatbox {
+      background: #1e1e1e;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    #messages {
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
     }
     #messages p {
       margin: 0.5rem 0;
@@ -36,9 +51,23 @@
     button:hover {
       background: #444;
     }
+    #toggle-theme {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #555;
+    }
+    body.dark #toggle-theme {
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
+  <button id="toggle-theme" onclick="toggleTheme()">🌙</button>
   <h1 style="text-align:center;">Talk to SayLessAI 2.0 🤖</h1>
   <div id="chatbox">
     <div id="messages"></div>
@@ -47,11 +76,24 @@
   </div>
 
   <script>
+    const messagesDiv = document.getElementById("messages");
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
+
+    function scrollToBottom() {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
     async function sendMessage() {
       const input = document.getElementById("userInput").value;
       if (!input.trim()) return;
 
-      document.getElementById("messages").innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+      // Show user input
+      messagesDiv.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
+      messagesDiv.innerHTML += `<p id="typing"><em>SayLessAI is typing...</em></p>`;
+      scrollToBottom();
       document.getElementById("userInput").value = "";
 
       try {
@@ -62,9 +104,16 @@
         });
 
         const data = await res.json();
-        document.getElementById("messages").innerHTML += `<p><strong>SayLessAI:</strong> ${data.reply}</p>`;
+        document.getElementById("typing").remove();
+        messagesDiv.innerHTML += `<p><strong>SayLessAI:</strong> ${data.reply}</p>`;
+        scrollToBottom();
+
+        // 🧠 Optional logging stub (you can send to GA, webhook, etc.)
+        console.log("Log:", { input, reply: data.reply });
       } catch (err) {
-        document.getElementById("messages").innerHTML += `<p><strong>Error:</strong> Could not reach backend.</p>`;
+        document.getElementById("typing").remove();
+        messagesDiv.innerHTML += `<p><strong>Error:</strong> Could not reach backend.</p>`;
+        scrollToBottom();
       }
     }
   </script>
