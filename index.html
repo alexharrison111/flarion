@@ -2,119 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SayLessAI Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SayLessAI 2.0 💬</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-      margin: 0;
-      background: #f9f9f9;
-      transition: background 0.3s, color 0.3s;
+    :root {
+      --bg: #f9f9f9;
+      --text: #111;
+      --card: #fff;
     }
     body.dark {
-      background: #121212;
-      color: #fff;
+      --bg: #121212;
+      --text: #f1f1f1;
+      --card: #1e1e1e;
     }
-    #chatbox {
-      max-width: 600px;
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 700px;
       margin: auto;
-      background: white;
+      background: var(--card);
       padding: 1rem;
       border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    body.dark #chatbox {
-      background: #1e1e1e;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
     }
     #messages {
       max-height: 400px;
       overflow-y: auto;
       margin-bottom: 1rem;
     }
-    #messages p {
+    .message {
       margin: 0.5rem 0;
     }
+    .user { font-weight: bold; }
+    .bot { color: teal; }
     input, button {
-      padding: 0.5rem;
-      margin-top: 0.5rem;
       width: 100%;
-      box-sizing: border-box;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      font-size: 1rem;
     }
-    button {
-      background: #222;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px;
+    #loading {
+      font-style: italic;
+      color: gray;
     }
-    button:hover {
-      background: #444;
-    }
-    #toggle-theme {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: transparent;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: #555;
-    }
-    body.dark #toggle-theme {
-      color: #ccc;
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
     }
   </style>
 </head>
 <body>
-  <button id="toggle-theme" onclick="toggleTheme()">🌙</button>
-  <h1 style="text-align:center;">Talk to SayLessAI 2.0 🤖</h1>
-  <div id="chatbox">
+  <div class="container">
+    <div class="top-bar">
+      <h1>SayLessAI 2.0 🤖</h1>
+      <button onclick="toggleDark()">🌙</button>
+    </div>
+
     <div id="messages"></div>
-    <input id="userInput" type="text" placeholder="Ask anything..." />
-    <button onclick="sendMessage()">Send</button>
+
+    <form onsubmit="sendMessage(); return false;">
+      <input id="userInput" type="text" placeholder="Ask something..." autocomplete="off"/>
+      <button type="submit">Send</button>
+    </form>
+
+    <div id="loading" style="display:none;">SayLessAI is typing<span id="dots">.</span></div>
   </div>
 
   <script>
     const messagesDiv = document.getElementById("messages");
+    const loading = document.getElementById("loading");
+    const dots = document.getElementById("dots");
 
-    function toggleTheme() {
+    let dotCount = 1;
+    setInterval(() => {
+      dots.innerText = ".".repeat(dotCount++ % 4 || 1);
+    }, 500);
+
+    function toggleDark() {
       document.body.classList.toggle("dark");
     }
 
-    function scrollToBottom() {
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
     async function sendMessage() {
-      const input = document.getElementById("userInput").value;
-      if (!input.trim()) return;
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
 
-      // Show user input
-      messagesDiv.innerHTML += `<p><strong>You:</strong> ${input}</p>`;
-      messagesDiv.innerHTML += `<p id="typing"><em>SayLessAI is typing...</em></p>`;
-      scrollToBottom();
-      document.getElementById("userInput").value = "";
+      // Show user message
+      addMessage("You", message, "user");
+
+      input.value = "";
+      loading.style.display = "block";
 
       try {
-        const res = await fetch("https://saylessaibackend.alexharrison111.repl.co/chat", {
+        const res = await fetch("https://YOUR_REPLIT_BACKEND_URL/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input }),
+          body: JSON.stringify({ message })
         });
-
         const data = await res.json();
-        document.getElementById("typing").remove();
-        messagesDiv.innerHTML += `<p><strong>SayLessAI:</strong> ${data.reply}</p>`;
-        scrollToBottom();
 
-        // 🧠 Optional logging stub (you can send to GA, webhook, etc.)
-        console.log("Log:", { input, reply: data.reply });
+        loading.style.display = "none";
+        if (data.reply) {
+          addMessage("SayLessAI", data.reply, "bot");
+        } else {
+          addMessage("SayLessAI", "Something went wrong ⚠️", "bot");
+        }
       } catch (err) {
-        document.getElementById("typing").remove();
-        messagesDiv.innerHTML += `<p><strong>Error:</strong> Could not reach backend.</p>`;
-        scrollToBottom();
+        loading.style.display = "none";
+        addMessage("SayLessAI", "Error connecting to server ❌", "bot");
       }
+    }
+
+    function addMessage(sender, text, type) {
+      const p = document.createElement("p");
+      p.className = `message ${type}`;
+      p.innerHTML = `<span class="${type}">${sender}:</span> ${text}`;
+      messagesDiv.appendChild(p);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
   </script>
 </body>
