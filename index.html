@@ -1,10 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Flarion</title>
+  <meta charset="UTF-8" />
+  <title>SayLessAI Chat</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f9f9f9; }
+    #chatbox { max-width: 600px; margin: auto; background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    #messages p { margin: 0.5rem 0; }
+    input, button { padding: 0.5rem; margin-top: 0.5rem; width: 100%; box-sizing: border-box; }
+  </style>
 </head>
 <body>
-  <h1>Welcome to flarion.fyi</h1>
-  <p>This site is hosted for FREE on GitHub Pages 🎉</p>
+  <h1>Talk to SayLessAI 2.0 🤖</h1>
+  <div id="chatbox">
+    <div id="messages"></div>
+    <input id="userInput" type="text" placeholder="Ask anything..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("userInput").value;
+      const res = await fetch("https://your-backend-url/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input })
+      });
+      const data = await res.json();
+      const messages = document.getElementById("messages");
+      messages.innerHTML += `<p><strong>You:</strong> ${input}</p><p><strong>SayLessAI:</strong> ${data.reply}</p>`;
+      document.getElementById("userInput").value = "";
+    }
+  </script>
 </body>
 </html>
